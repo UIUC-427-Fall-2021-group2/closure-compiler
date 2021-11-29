@@ -34,7 +34,6 @@ import com.google.javascript.rhino.Token;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -248,7 +247,6 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
     boolean isStringLiteral = stringNode.isStringLit();
     String functionNameString = callTarget.getString();
     Node firstArg = callTarget.getNext();
-
     if (isStringLiteral) {
       if (functionNameString.equals("split")) {
         return tryFoldStringSplit(subtree, stringNode, firstArg);
@@ -948,7 +946,7 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
   }
 
   /**
-   * Try to fold String.charCodeAt(int) calls
+   * Try to fold .charCodeAt() calls on strings
    */
   private Node tryFoldStringCharCodeAt(Node n, Node stringNode, Node arg1) {
     checkArgument(n.isCall());
