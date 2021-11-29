@@ -34,6 +34,7 @@ import com.google.javascript.rhino.Token;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -247,6 +248,7 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
     boolean isStringLiteral = stringNode.isStringLit();
     String functionNameString = callTarget.getString();
     Node firstArg = callTarget.getNext();
+
     if (isStringLiteral) {
       if (functionNameString.equals("split")) {
         return tryFoldStringSplit(subtree, stringNode, firstArg);
@@ -314,6 +316,11 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
         }
       }
     }
+
+    if (functionNameString.equals("fromCharCode")) {
+      return tryFoldStringFromCharCode(subtree, firstArg);
+    }
+
     return subtree;
   }
 
@@ -941,7 +948,7 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
   }
 
   /**
-   * Try to fold .charCodeAt() calls on strings
+   * Try to fold String.charCodeAt(int) calls
    */
   private Node tryFoldStringCharCodeAt(Node n, Node stringNode, Node arg1) {
     checkArgument(n.isCall());
@@ -964,6 +971,29 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
     }
 
     Node resultNode = IR.number(stringAsString.charAt(index));
+    Node parent = n.getParent();
+    n.replaceWith(resultNode);
+    reportChangeToEnclosingScope(parent);
+    return resultNode;
+  }
+
+  /**
+   * Try to fold .fromCharCode() calls on strings
+   */
+  private Node tryFoldStringFromCharCode(Node n, Node arg1) {
+    checkArgument(n.isCall());
+
+    char charCode;
+
+    if (arg1 != null && arg1.isNumber()
+            && arg1.getNext() == null) {
+      charCode = (char) arg1.getDouble();
+    } else {
+      return n;
+    }
+
+    String charCodeString = String.valueOf(charCode);
+    Node resultNode = IR.string(charCodeString);
     Node parent = n.getParent();
     n.replaceWith(resultNode);
     reportChangeToEnclosingScope(parent);
