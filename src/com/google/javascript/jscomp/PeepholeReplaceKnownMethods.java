@@ -34,6 +34,7 @@ import com.google.javascript.rhino.Token;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -283,6 +284,10 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
           }
         }
       }
+    } else {
+      if (functionNameString.equals("fromCharCode")) {
+        return tryFoldStringFromCharCode(subtree, callTarget);
+      }
     }
     if (useTypes
         && firstArg != null
@@ -313,10 +318,6 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
           }
         }
       }
-    }
-
-    if (functionNameString.equals("fromCharCode")) {
-      return tryFoldStringFromCharCode(subtree, firstArg);
     }
 
     return subtree;
@@ -978,19 +979,32 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
   /**
    * Try to fold .fromCharCode() calls on strings
    */
-  private Node tryFoldStringFromCharCode(Node n, Node arg1) {
+  private Node tryFoldStringFromCharCode(Node n, Node callTarget) {
     checkArgument(n.isCall());
 
-    char charCode;
+    List<Character> charCodes = ImmutableList.of();
 
-    if (arg1 != null && arg1.isNumber()
-            && arg1.getNext() == null) {
-      charCode = (char) arg1.getDouble();
-    } else {
+    for (Node arg = callTarget.getNext(); arg != null; arg = arg.getNext()) {
+      Double value = getSideEffectFreeNumberValue(arg);
+      if (value != null) {
+        double d = (double) value;
+        if (charCodes.isEmpty()) {
+          // lazily allocate, most calls will not be optimizable
+          charCodes = new ArrayList<>();
+        }
+        charCodes.add(Character.valueOf((char) d));
+      } else {
+        return n;
+      }
+    }
+
+    if (charCodes.isEmpty()) {
       return n;
     }
 
-    String charCodeString = String.valueOf(charCode);
+    String charCodeString = String.valueOf(charCodes.stream()
+            .map(String::valueOf)
+            .collect(Collectors.joining()));
     Node resultNode = IR.string(charCodeString);
     Node parent = n.getParent();
     n.replaceWith(resultNode);
