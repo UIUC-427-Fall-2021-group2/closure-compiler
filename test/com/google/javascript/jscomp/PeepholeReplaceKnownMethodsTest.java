@@ -336,6 +336,19 @@ public final class PeepholeReplaceKnownMethodsTest extends CompilerTestCase {
   }
 
   @Test
+  public void testFoldStringFromCharCode() {
+    fold("x = String.fromCharCode(115)", "x = 's'");
+    fold("x = String.fromCharCode(189, 43, 190, 61)", "x = '½+¾='");
+    fold("x = String.fromCharCode(65, 66, 67)", "x = 'ABC'");
+    fold("x = String.fromCharCode(0x2014)", "x = '—'");
+    fold("x = String.fromCharCode(0x12014)", "x = '—'");
+    fold("x = String.fromCharCode(8212)", "x = '—'");
+    fold("x = String.fromCharCode(0xD83C, 0xDF03)", "x = '\uD83C\uDF03'");
+    fold("x = String.fromCharCode(55356, 57091)", "x = '\uD83C\uDF03'");
+    fold("x = String.fromCharCode(0xD834, 0xDF06, 0x61, 0xD834, 0xDF07)", "x = '\uD834\uDF06a\uD834\uDF07'");
+  }
+
+  @Test
   public void testFoldStringSplit() {
     late = false;
     fold("x = 'abcde'.split('foo')", "x = ['abcde']");
