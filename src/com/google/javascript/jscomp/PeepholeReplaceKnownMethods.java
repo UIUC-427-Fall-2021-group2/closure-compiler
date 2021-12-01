@@ -285,6 +285,7 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
         }
       }
     } else {
+      // CS 427 Issue Link: https://github.com/google/closure-compiler/issues/3606
       if (functionNameString.equals("fromCharCode")) {
         return tryFoldStringFromCharCode(subtree, callTarget);
       }
@@ -976,6 +977,7 @@ class PeepholeReplaceKnownMethods extends AbstractPeepholeOptimization {
     return resultNode;
   }
 
+  // CS 427 Issue Link: https://github.com/google/closure-compiler/issues/3606
   /**
    * Try to fold .fromCharCode() calls on strings
    */

@@ -335,6 +335,7 @@ public final class PeepholeReplaceKnownMethodsTest extends CompilerTestCase {
     foldSame("x = `abcdef ${abc}`.charCodeAt(0)");
   }
 
+  // CS 427 Issue Link: https://github.com/google/closure-compiler/issues/3606
   @Test
   public void testFoldStringFromCharCode() {
     fold("x = String.fromCharCode(115)", "x = 's'");
