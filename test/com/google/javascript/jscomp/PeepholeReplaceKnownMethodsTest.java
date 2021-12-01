@@ -346,6 +346,9 @@ public final class PeepholeReplaceKnownMethodsTest extends CompilerTestCase {
     fold("x = String.fromCharCode(0xD83C, 0xDF03)", "x = '\uD83C\uDF03'");
     fold("x = String.fromCharCode(55356, 57091)", "x = '\uD83C\uDF03'");
     fold("x = String.fromCharCode(0xD834, 0xDF06, 0x61, 0xD834, 0xDF07)", "x = '\uD834\uDF06a\uD834\uDF07'");
+    fold("x = String.fromCharCode(-21)", "x = '￫'");
+    fold("x = String.fromCharCode({})", "x = '\\x00'");
+    fold("x = String.fromCharCode('garbledstring')", "x = '\\x00'");
   }
 
   @Test
